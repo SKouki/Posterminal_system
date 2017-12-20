@@ -1,4 +1,4 @@
-//-*- java -*-
+﻿//-*- java -*-
 /******************************************************************************
  *
  *  福岡大学工学部電子情報工学科プロジェクト型ソフトウェア開発演習教材
@@ -334,6 +334,9 @@ public class POSTerminalApp {
 		// おつりを計算する。
 		int changePrice = paidPrice - totalPrice;
 
+                //ポイント付与額を計算する。
+		memberUnderManagement.point += (int)((totalPrice - paymentDialog.getPaidPoint())*0.01);
+
 		// お預かり額とおつりを商品チェック画面に表示する。
 		checkArticlesScreenPanel.setPaidPrice(paidPrice);
 		checkArticlesScreenPanel.setChangePrice(changePrice);
@@ -345,8 +348,16 @@ public class POSTerminalApp {
 		// キャッシュドロワを開ける。
 		cashDrawerIF.openDrawer();
 
-		// データベースを更新する。
-		//@@@ 未実装
+		// データベースを更新する。(ポイント付与情報のみ)
+		try {
+			Statement stmt = dbServerIF.conn.createStatement();
+			String sql = "update membertbl set point=' where point = '" + (memberUnderManagement.point) + "';";
+			stmt.executeUpdate(sql);
+			stmt.close();
+		}
+		catch (SQLException ex) {
+			throw new DBServerIFException("SQLException: " + ex.getMessage());
+		}
 
 		// 商品チェック画面を決済済み状態にする。
 		checkArticlesScreenPanel.setState(CheckArticlesScreenPanelState.PaymentFinished);
