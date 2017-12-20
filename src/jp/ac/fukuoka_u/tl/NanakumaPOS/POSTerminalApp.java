@@ -310,18 +310,20 @@ public class POSTerminalApp {
 	/*
 	 * 決済が要求された場合に呼び出される。
 	 */
-	public Boolean paymentRequested() {
+	public Boolean paymentRequested() throws DBServerIFException {
 		// 決済対象商品販売の合計金額を得る。
 		int totalPrice = salesUnderChecking.getTotalPrice();
 
-	
-		
+		int point = -1;
+		if(memberUnderChecking!=null) {
+			point = memberUnderChecking.getPoint();
+		}
 		// カスタマディスプレイに合計金額を表示する。
 		customerDisplayIF.displayUpperMessage("合計金額", AbstractedCustomerDisplayIF.Alignment.LEFT);
 		customerDisplayIF.displayLowerMessage(Integer.toString(totalPrice), AbstractedCustomerDisplayIF.Alignment.RIGHT);
 
 		// お預かりの入力を求める。
-		PaymentDialog paymentDialog = new PaymentDialog(frame, totalPrice);
+		PaymentDialog paymentDialog = new PaymentDialog(frame, totalPrice, point);
 		paymentDialog.setVisible(true);
 
 		// お預かりの入力がキャンセルされた場合は決済もキャンセルする。
@@ -334,12 +336,13 @@ public class POSTerminalApp {
 		// おつりを計算する。
 		int changePrice = paidPrice - totalPrice;
 
-                //ポイント付与額を計算する。
-		memberUnderManagement.point += (int)((totalPrice - paymentDialog.getPaidPoint())*0.01);
+		//ポイント付与額を計算する。
+		point += (int)((totalPrice - paymentDialog.getPaidPoint())*0.01);
 
 		// お預かり額とおつりを商品チェック画面に表示する。
 		checkArticlesScreenPanel.setPaidPrice(paidPrice);
 		checkArticlesScreenPanel.setChangePrice(changePrice);
+		//checkArticlesScreenPanel.(Point);
 
 		// カスタマディスプレイにおつりを表示する。
 		customerDisplayIF.displayUpperMessage("おつり", AbstractedCustomerDisplayIF.Alignment.LEFT);
@@ -349,15 +352,7 @@ public class POSTerminalApp {
 		cashDrawerIF.openDrawer();
 
 		// データベースを更新する。(ポイント付与情報のみ)
-		try {
-			Statement stmt = dbServerIF.conn.createStatement();
-			String sql = "update membertbl set point=' where point = '" + (memberUnderManagement.point) + "';";
-			stmt.executeUpdate(sql);
-			stmt.close();
-		}
-		catch (SQLException ex) {
-			throw new DBServerIFException("SQLException: " + ex.getMessage());
-		}
+		dbServerIF.point_granted(point);
 
 		// 商品チェック画面を決済済み状態にする。
 		checkArticlesScreenPanel.setState(CheckArticlesScreenPanelState.PaymentFinished);
@@ -437,7 +432,7 @@ public class POSTerminalApp {
 	 */
 	public Boolean memberDeletionRequested(String memberID) {
 		//@@@ データベースに会員削除を依頼する部分は未実装。
-		
+
 		memberUnderManagement = null;
 		memberManagementScreenPanel.memberUnderManagementChanged();
 		return true;
@@ -452,3 +447,4 @@ public class POSTerminalApp {
 		return true;
 	}
 }
+

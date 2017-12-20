@@ -1,4 +1,4 @@
-//-*- java -*-
+﻿//-*- java -*-
 /******************************************************************************
  *
  *  福岡大学工学部電子情報工学科プロジェクト型ソフトウェア開発演習教材
@@ -23,9 +23,9 @@ import jp.ac.fukuoka_u.tl.NanakumaPOS.Member.Gender;
 
 public class DBServerIF {
 	private Connection conn;
-	private String url = "jdbc:mysql://hamburg.tl.fukuoka-u.ac.jp/nanakumapos5";
-	private String user = "b3pbl";
-	private String password = "nanakumapbl";
+	private String url = "";
+	private String user = "";
+	private String password = "";
 
 	public class DBServerIFException extends Exception {
 		private String message;
@@ -184,5 +184,19 @@ public class DBServerIF {
 			throw new DBServerIFException("SQLException: " + ex.getMessage());
 		}
 	}
-
+	
+	/*
+	 * ポイントを付与する。
+	 */
+	 public void point_granted(int point) throws DBServerIFException {
+		 try {
+				Statement stmt = conn.createStatement();
+				String sql = "update membertbl set point=' where point = '" + (point) + "';";
+				stmt.executeUpdate(sql);
+				stmt.close();
+			}
+			catch (SQLException ex) {
+				throw new DBServerIFException("SQLException: " + ex.getMessage());
+			}
+	 }
 }
